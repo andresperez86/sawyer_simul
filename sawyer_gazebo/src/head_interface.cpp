@@ -44,8 +44,10 @@ bool HeadInterface::init(ros::NodeHandle& nh,
   // without preventing Gazebo from starting up. So, if there is a need to do
   // something immediately after startup (like publish an image), it needs to
   // be done in a thread.
-  thread_head_display_ = std::make_unique<std::thread>(&HeadInterface::startHead,
-                                                       this, std::ref(nh), controller_manager);
+  // thread_head_display_ = std::make_unique<std::thread>(&HeadInterface::startHead,
+  //                                                      this, std::ref(nh), controller_manager);
+  thread_head_display_ = std::unique_ptr<std::thread>(new std::thread(&HeadInterface::startHead,
+								      this, std::ref(nh), controller_manager));
   return true;
 }
 
@@ -65,7 +67,8 @@ bool HeadInterface::startHead(const ros::NodeHandle& nh, boost::shared_ptr<contr
     image_transport::ImageTransport img_trans(nh);
     image_transport::Publisher display_pub = img_trans.advertise("head_display", 1);
     // Read OpenCV Mat image and convert it to ROS message
-    auto cv_ptr = std::make_unique<cv_bridge::CvImage>();
+    //auto cv_ptr = std::make_unique<cv_bridge::CvImage>();
+    auto cv_ptr = std::unique_ptr<cv_bridge::CvImage>(new cv_bridge::CvImage());
     try
     {
       cv_ptr->image = cv::imread(img_path, CV_LOAD_IMAGE_UNCHANGED);

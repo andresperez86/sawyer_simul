@@ -142,9 +142,12 @@ bool ArmKinematicsInterface::createKinematicChain(std::string tip_name)
     kin.joint_names.push_back(kin.chain.getSegment(seg_idx).getJoint().getName());
   }
   // Construct Solvers
-  kin.gravity_solver = std::make_unique<KDL::ChainIdSolver_RNE>(kin.chain, KDL::Vector(0.0, 0.0, -9.8));
-  kin.fk_pos_solver = std::make_unique<KDL::ChainFkSolverPos_recursive>(kin.chain);
-  kin.fk_vel_solver = std::make_unique<KDL::ChainFkSolverVel_recursive>(kin.chain);
+  //  kin.gravity_solver = std::make_unique<KDL::ChainIdSolver_RNE>(kin.chain, KDL::Vector(0.0, 0.0, -9.8));
+  kin.gravity_solver = std::unique_ptr<KDL::ChainIdSolver_RNE>(new KDL::ChainIdSolver_RNE(kin.chain, KDL::Vector(0.0, 0.0, -9.8)));
+  //kin.fk_pos_solver = std::make_unique<KDL::ChainFkSolverPos_recursive>(kin.chain);
+  kin.fk_pos_solver = std::unique_ptr<KDL::ChainFkSolverPos_recursive>(new KDL::ChainFkSolverPos_recursive(kin.chain));
+  // kin.fk_vel_solver = std::make_unique<KDL::ChainFkSolverVel_recursive>(kin.chain);
+  kin.fk_vel_solver = std::unique_ptr<KDL::ChainFkSolverVel_recursive>(new KDL::ChainFkSolverVel_recursive(kin.chain));
   auto num_jnts = kin.joint_names.size();
   KDL::JntArray q_min(num_jnts);
   KDL::JntArray q_max(num_jnts);
@@ -169,8 +172,10 @@ bool ArmKinematicsInterface::createKinematicChain(std::string tip_name)
                      kin.joint_names[i].c_str());
     }
   }
-  kin.ik_solver = std::make_unique<sns_ik::SNS_IK>(kin.chain, q_min, q_max,
-                                                   v_max, a_max, kin.joint_names);
+  // kin.ik_solver = std::make_unique<sns_ik::SNS_IK>(kin.chain, q_min, q_max,
+  //                                                  v_max, a_max, kin.joint_names);
+  kin.ik_solver = std::unique_ptr<sns_ik::SNS_IK>(new sns_ik::SNS_IK(kin.chain, q_min, q_max,
+								     v_max, a_max, kin.joint_names));
   kin.ik_solver->setVelocitySolveType(sns_ik::SNS_FastOptimal);
   kinematic_chain_map_.insert(std::make_pair(tip_name, std::move(kin)));
   return true;
